@@ -1,0 +1,1 @@
+move C:\Users\NaMYY\Desktop\Farmacia\Expedientes\expediente(%1).tex C:\Users\NaMYY\Desktop\Farmacia
