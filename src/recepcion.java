@@ -43,8 +43,18 @@ public class recepcion extends javax.swing.JPanel {
     private reloj r;
     private ComboBoxModel horarios;
     private DefaultListModel pacientes = new DefaultListModel();
-    private DefaultTableModel busqueda = new DefaultTableModel();
-    private DefaultTableModel citas = new DefaultTableModel();
+    private DefaultTableModel busqueda = new DefaultTableModel(){
+        @Override
+        public boolean isCellEditable(int row, int column) {
+                return false;
+        }
+    };
+    private DefaultTableModel citas = new DefaultTableModel(){
+        @Override
+        public boolean isCellEditable(int row, int column) {
+                return false;
+        }
+    };
     private ResultSet dates;
     private PDFViewerBean prevent = new PDFViewerBean();
     /**
@@ -167,6 +177,8 @@ public class recepcion extends javax.swing.JPanel {
         jLabel29 = new javax.swing.JLabel();
         jTextField13 = new javax.swing.JTextField();
         jButton10 = new javax.swing.JButton();
+        jLabel7 = new javax.swing.JLabel();
+        jComboBox2 = new javax.swing.JComboBox();
         jLabel1 = new javax.swing.JLabel();
         jButton1 = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
@@ -536,6 +548,10 @@ public class recepcion extends javax.swing.JPanel {
             }
         });
 
+        jLabel7.setText("Sexo");
+
+        jComboBox2.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Masculino", "Femenino" }));
+
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
@@ -567,11 +583,13 @@ public class recepcion extends javax.swing.JPanel {
                                 .addGap(80, 80, 80)
                                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel28)
-                                    .addComponent(jLabel29))
+                                    .addComponent(jLabel29)
+                                    .addComponent(jLabel7))
                                 .addGap(71, 71, 71)
                                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                     .addComponent(jTextField12)
-                                    .addComponent(jTextField13, javax.swing.GroupLayout.DEFAULT_SIZE, 157, Short.MAX_VALUE))))
+                                    .addComponent(jTextField13, javax.swing.GroupLayout.DEFAULT_SIZE, 157, Short.MAX_VALUE)
+                                    .addComponent(jComboBox2, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                         .addGap(0, 147, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
@@ -598,7 +616,9 @@ public class recepcion extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel25)
-                    .addComponent(jTextField11, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jTextField11, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel7)
+                    .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel26)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -693,19 +713,25 @@ public class recepcion extends javax.swing.JPanel {
                             }else{
                                 Connection cnn = (new conectar()).conect();
                                 Statement stmt = cnn.createStatement();
-                                stmt.execute("insert into cita values(default, 0, (select idHorario from horario where inicio = '"+inicio+"' and fin = '"+fin+"' and idConsultorio = (select idConsultorio from consultorio where numero = "+consultorio+")), '"+fecha+"','"+nombre+"', 0, default)");
-                                JOptionPane.showMessageDialog(this,"Cita agendada");
+                                ResultSet rs = stmt.executeQuery("select (curdate() - date('"+fecha+"')) <= 0 as posible");
+                                rs.next();
+                                if(rs.getBoolean("posible")){
+                                    stmt.execute("insert into cita values(default, 0, (select idHorario from horario where inicio = '"+inicio+"' and fin = '"+fin+"' and idConsultorio = (select idConsultorio from consultorio where numero = "+consultorio+")), '"+fecha+"','"+nombre+"', 0, default)");
+                                    JOptionPane.showMessageDialog(this,"Cita agendada");
+                                    jTextField6.setText("");
+                                    jTextField4.setText("");
+                                    c.actualiza();
+                                }else{
+                                    JOptionPane.showMessageDialog(this, "Fecha no permitida");
+                                }
                                 stmt.close();
                                 cnn.close();
                             }
-                            jTextField6.setText("");
-                            jTextField4.setText("");
-                            c.actualiza();
                         }catch(Exception e){
                             JOptionPane.showMessageDialog(this,"Error al crear la cita");
                         }
                         actualizacion();
-                    }else{
+                    }else if(jRadioButton2.isSelected()){
                         try{
                             curp = jTextField6.getText();
                             if(buscarExpediente(curp)){
@@ -715,17 +741,24 @@ public class recepcion extends javax.swing.JPanel {
                                 fecha = c.selectedBase().replace("/", "-");
                                 Connection cnn = (new conectar()).conect();
                                 Statement stmt = cnn.createStatement();
-                                stmt.execute("insert into cita values(default, (select idPaciente from paciente where curp = '"+curp+"'), (select idHorario from horario where inicio = '"+inicio+"' and fin = '"+fin+"' and idConsultorio = (select idConsultorio from consultorio where numero = "+consultorio+")), '"+fecha+"', (select concat(nombre, ' ', apellidos) from paciente where curp = '"+curp+"'), default)");
-                                JOptionPane.showMessageDialog(this,"Cita agendada");
-                                jTextField4.setText("");
-                                jTextField6.setText("");
-                                c.actualiza();
+                                ResultSet rs = stmt.executeQuery("select (curdate() - date('"+fecha+"')) <= 0 as posible");
+                                rs.next();
+                                if(rs.getBoolean("posible")){
+                                    stmt.execute("insert into cita values(default, (select idPaciente from paciente where curp = '"+curp+"'), (select idHorario from horario where inicio = '"+inicio+"' and fin = '"+fin+"' and idConsultorio = (select idConsultorio from consultorio where numero = "+consultorio+")), '"+fecha+"', (select concat(nombre, ' ', apellidos) from paciente where curp = '"+curp+"'), default, default)");
+                                    JOptionPane.showMessageDialog(this,"Cita agendada");
+                                    jTextField4.setText("");
+                                    jTextField6.setText("");
+                                    c.actualiza();
+                                }else{
+                                    JOptionPane.showMessageDialog(this, "Fecha no permitida");
+                                }
                                 stmt.close();
                                 cnn.close();
                             }else{
                                 JOptionPane.showMessageDialog(this, "Paciente no registrado");
                             }
                         }catch(Exception e){
+                            e.printStackTrace();
                         }
                     }
                     actualizacion();
@@ -738,37 +771,46 @@ public class recepcion extends javax.swing.JPanel {
 
     private void jButton10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton10ActionPerformed
         String nombre, apellidos, cronico, familiar, curp, direccion;
-        int edad;
+        boolean pasa = false;
+        int edad = 0;
         nombre = jTextField9.getText();
         apellidos = jTextField10.getText();
-        edad = Integer.parseInt(jTextField11.getText());
-        cronico = jTextArea1.getText();
-        familiar = jTextArea2.getText();
-        curp = jTextField12.getText();
-        direccion = jTextField13.getText();
-        if(nombre.equals("") || apellidos.equals("") || curp.equals("") || direccion.equals("") || jTextField11.getText().equals("")){
-            JOptionPane.showMessageDialog(this, "No has llenado todos los campos necesarios");
-        }else{
-            try{
-                conectar cn = new conectar();
-                Connection cnn = cn.conect();
-                Statement stmt = cnn.createStatement();
-                stmt.execute("insert into paciente values(default, '"+nombre+"','"+apellidos+"',"+edad+",'"+curp+"','"+direccion+"','"+cronico+"','"+familiar+"')");
-                jTextField9.setText("");
-                jTextField10.setText("");
-                jTextField11.setText("");
-                jTextField12.setText("");
-                jTextField13.setText("");
-                jTextArea1.setText("");
-                jTextArea2.setText("");
-                JOptionPane.showMessageDialog(this, "Paciente registrado");
-                pacientes.addElement(curp + " | " + nombre);
-                expediente exp = new expediente();
-                exp.crear(nombre, curp, direccion, edad, cronico, familiar);
-                stmt.close();
-                cnn.close();
-            }catch(SQLException | HeadlessException e){
-                JOptionPane.showMessageDialog(this,"No se puede conectar a la base de datos");
+        try{
+            edad = Integer.parseInt(jTextField11.getText());
+            pasa = true;
+        }catch(Exception e){
+            JOptionPane.showMessageDialog(this,"Formato de edad incorrecto");
+            pasa = false;
+        }
+        if(pasa){
+            cronico = jTextArea1.getText();
+            familiar = jTextArea2.getText();
+            curp = jTextField12.getText();
+            direccion = jTextField13.getText();
+            if(nombre.equals("") || apellidos.equals("") || curp.equals("") || direccion.equals("") || jTextField11.getText().equals("")){
+                JOptionPane.showMessageDialog(this, "No has llenado todos los campos necesarios");
+            }else{
+                try{
+                    conectar cn = new conectar();
+                    Connection cnn = cn.conect();
+                    Statement stmt = cnn.createStatement();
+                    stmt.execute("insert into paciente values(default, '"+nombre+"','"+apellidos+"',"+edad+",'"+curp+"','"+direccion+"','"+cronico+"','"+familiar+"')");
+                    jTextField9.setText("");
+                    jTextField10.setText("");
+                    jTextField11.setText("");
+                    jTextField12.setText("");
+                    jTextField13.setText("");
+                    jTextArea1.setText("");
+                    jTextArea2.setText("");
+                    JOptionPane.showMessageDialog(this, "Paciente registrado");
+                    pacientes.addElement(curp + " | " + nombre);
+                    expediente exp = new expediente();
+                    exp.crear(nombre, curp, direccion, edad, cronico, familiar);
+                    stmt.close();
+                    cnn.close();
+                }catch(SQLException | HeadlessException e){
+                    JOptionPane.showMessageDialog(this,"No se puede conectar a la base de datos");
+                }
             }
         }
     }//GEN-LAST:event_jButton10ActionPerformed
@@ -882,7 +924,7 @@ public class recepcion extends javax.swing.JPanel {
                             if(temprano){
                                 JOptionPane.showMessageDialog(this, "Aun es temprano para la cita");
                             }else if(tarde){
-                                JOptionPane.showMessageDialog(this, "La cita ya ha pasado, solicite pago de multa");
+                                JOptionPane.showMessageDialog(this, "Su cita ya ha pasado");
                             }
                         }
                     }else{
@@ -1097,6 +1139,7 @@ public class recepcion extends javax.swing.JPanel {
     private javax.swing.JButton jButton7;
     private javax.swing.JButton jButton8;
     private javax.swing.JComboBox jComboBox1;
+    private javax.swing.JComboBox jComboBox2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -1116,6 +1159,7 @@ public class recepcion extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;

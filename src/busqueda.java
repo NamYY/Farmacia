@@ -21,8 +21,18 @@ import javax.swing.JPanel;
  */
 public class busqueda extends javax.swing.JPanel {
 
-    DefaultTableModel pacientes = new DefaultTableModel();
-    DefaultTableModel search = new DefaultTableModel();
+    DefaultTableModel pacientes = new DefaultTableModel(){
+        @Override
+        public boolean isCellEditable(int row, int column) {
+                return false;
+        }
+    };
+    DefaultTableModel search = new DefaultTableModel(){
+        @Override
+        public boolean isCellEditable(int row, int column) {
+                return false;
+        }
+    };
     private PDFViewerBean expediente;
     private JFrame este;
     /**

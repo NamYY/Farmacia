@@ -22,8 +22,18 @@ public class admin extends javax.swing.JPanel {
     private DefaultListModel medicos = new DefaultListModel();
     private DefaultListModel cDisponibles = new DefaultListModel();
     private DefaultListModel mDisponibles = new DefaultListModel();
-    private DefaultTableModel asignaciones = new DefaultTableModel();
-    private DefaultTableModel medicamentos = new DefaultTableModel();
+    private DefaultTableModel asignaciones = new DefaultTableModel(){
+        @Override
+        public boolean isCellEditable(int row, int column) {
+                return false;
+        }
+    };
+    private DefaultTableModel medicamentos = new DefaultTableModel(){
+        @Override
+        public boolean isCellEditable(int row, int column) {
+                return false;
+        }
+    };
     private final JFrame anfitrion;
     private final JFrame actual;
     private final JFrame fram = new JFrame();
@@ -718,6 +728,7 @@ public class admin extends javax.swing.JPanel {
                 JOptionPane.showMessageDialog(this,"Consultorio eliminado");
                 stmt.close();
                 cnn.close();
+                actualizar();
             }else{
                 JOptionPane.showMessageDialog(this, "No has seleccionado un consultrio a eliminar");
             }
@@ -737,6 +748,7 @@ public class admin extends javax.swing.JPanel {
             JOptionPane.showMessageDialog(this, "Precios actualizados");
             stmt.close();
             cnn.close();
+            actualizar();
         }catch(Exception e){
             JOptionPane.showMessageDialog(this, "No has escrito un formato de precio correcto");
         }
@@ -778,11 +790,13 @@ public class admin extends javax.swing.JPanel {
                 String nombre = jList4.getSelectedValue().toString();
                 Connection cnn = (new conectar()).conect();
                 Statement stmt = cnn.createStatement();
-                stmt.execute("update horario set idMedico = 0 where idMedico = (select idMedico from medico where concat(nombre,' ',apelidos) = '"+nombre+"')");
-                stmt.execute("delete from medico where idMedico = (select idMedico from medico where concat(nombre,' ',apelidos) = '"+nombre+"')");
+                stmt.execute("update horario set idMedico = 0 where idMedico = (select idMedico from medico where concat(nombre,' ',apellidos) = '"+nombre+"')");
+                ResultSet rs = stmt.executeQuery("(select idMedico from medico where concat(nombre,' ',apellidos) = '"+nombre+"')");
+                rs.next();
+                stmt.execute("delete from medico where idMedico = " + rs.getString("idMedico"));
                 stmt.close();
                 cnn.close();
-                JOptionPane.showMessageDialog(this,"Medico Despedido");
+                JOptionPane.showMessageDialog(this,"Medico despedido");
                 actualizar();
             }catch(SQLException | HeadlessException e){
                 
@@ -818,10 +832,10 @@ public class admin extends javax.swing.JPanel {
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
         String nombre, apellidos, especialidad, cedula, contraseña;
         nombre = jTextField1.getText();
-        apellidos = jTextField1.getText();
-        especialidad = jTextField1.getText();
-        cedula = jTextField1.getText();
-        contraseña = jTextField1.getText();
+        apellidos = jTextField2.getText();
+        especialidad = jTextField3.getText();
+        cedula = jTextField4.getText();
+        contraseña = jTextField5.getText();
         if(nombre.equals("")||apellidos.equals("")||especialidad.equals("")||cedula.equals("")||contraseña.equals("")){
             JOptionPane.showMessageDialog(this, "No has llenado todos los campos");
         }else{
@@ -832,6 +846,11 @@ public class admin extends javax.swing.JPanel {
                 stmt.close();
                 cnn.close();
                 JOptionPane.showMessageDialog(this, "Medico registrado");
+                jTextField1.setText("");
+                jTextField2.setText("");
+                jTextField3.setText("");
+                jTextField4.setText("");
+                jTextField5.setText("");
                 actualizar();
             }catch(Exception e){
                 
@@ -848,7 +867,7 @@ public class admin extends javax.swing.JPanel {
                 try{
                     Connection cnn = (new conectar()).conect();
                     Statement stmt = cnn.createStatement();
-                    ResultSet rs = stmt.executeQuery("select idConsultorio from horario where idMedico = (select idMedico from medico where concat(nombre, ' ', apellidos)) = '"+doctor+"' and inicio = '06:00:00'");
+                    ResultSet rs = stmt.executeQuery("select idConsultorio from horario where idMedico = (select idMedico from medico where concat(nombre, ' ', apellidos) = '"+doctor+"') and inicio = '06:00:00'");
                     if(rs.next()){
                         JOptionPane.showMessageDialog(this, "El medico ya esta ocupado en ese horario");
                     }else{
@@ -868,7 +887,7 @@ public class admin extends javax.swing.JPanel {
                 try{
                     Connection cnn = (new conectar()).conect();
                     Statement stmt = cnn.createStatement();
-                    ResultSet rs = stmt.executeQuery("select idConsultorio from horario where idMedico = (select idMedico from medico where concat(nombre, ' ', apellidos)) = '"+doctor+"' and inicio = '13:00:00'");
+                    ResultSet rs = stmt.executeQuery("select idConsultorio from horario where idMedico = (select idMedico from medico where concat(nombre, ' ', apellidos) = '"+doctor+"') and inicio = '13:00:00'");
                     if(rs.next()){
                         JOptionPane.showMessageDialog(this, "El medico ya esta ocupado en ese horario");
                     }else{

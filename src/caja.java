@@ -177,10 +177,10 @@ public class caja extends javax.swing.JPanel {
         boolean pasa = false;
         switch(selected){
             case "consulta":
-                pasa = jTextField1.getText().equals(consulta);
+                pasa = Double.parseDouble(jTextField1.getText()) == (consulta);
                 break;
             case "vacunas":
-                pasa = jTextField1.getText().equals(vacunas);
+                pasa = Double.parseDouble(jTextField1.getText()) == (vacunas);
                 break;
             default:
                 pasa = true;

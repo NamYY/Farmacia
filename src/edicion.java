@@ -66,6 +66,8 @@ public class edicion extends javax.swing.JPanel {
 
         jLabel4.setText("Nombre:");
 
+        jTextField1.setEnabled(false);
+
         jTextArea1.setColumns(20);
         jTextArea1.setRows(5);
         jTextArea1.setPreferredSize(new java.awt.Dimension(120, 94));
